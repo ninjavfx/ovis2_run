@@ -14,12 +14,13 @@ This tool enables local inference with the Ovis2-16B-GPTQ-Int4 multimodal model,
 - Python 3.10
 - Git
 - Conda (recommended for environment management)
+- Linux operating system (tool has only been tested on Linux)
 
 ## Installation
 
 ### 1. Install the Ovis Framework
 
-First, clone and set up the main Ovis repository:
+First, clone and set up the main [Ovis repository](https://github.com/AIDC-AI/Ovis):
 
 ```bash
 git clone git@github.com:AIDC-AI/Ovis.git
