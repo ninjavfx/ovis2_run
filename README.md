@@ -39,15 +39,14 @@ pip install gptqmodel
 
 Or you can just use the included install script
 
-```
+```bash
 ./install.sh
-```
-```
 ```
 
 ### 3. Download the Model
 
-Create a directory for the model and download it using the Hugging Face CLI:
+Create a directory for the model and download it using the Hugging Face CLI.
+(Please note that if you have more than 24GB of VRAM you could try and download the 32B parameters)
 
 ```bash
 mkdir models_16B
