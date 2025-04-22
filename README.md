@@ -68,8 +68,13 @@ python ovis2_run.py --image_path IMAGE_PATH --prompt PROMPT --model_path MODEL_P
 - `--image_path`: Path to the input image file (required)
 - `--prompt`: Text prompt to guide the model's response (required)
 - `--model_path`: Path to the downloaded model directory (required)
-- `--max_tokens`: Maximum number of tokens to generate (optional)
+- `--max_tokens`: Maximum number of tokens to generate (optional, defaults to 1024)
 - `--output_dir`: Directory to save output files (optional, defaults to image directory)
+- `--temperature`: Sampling temperature for generation (optional, defaults to 0.7)
+- `--top_p`: Top-p sampling parameter (optional, defaults to 0.9)
+- `--max_partition`: Maximum image partition for high-resolution image (optional, defaults to 9)
+- `--no_sample`: Use greedy decoding instead of sampling, this ignores temperature and top_p (more consistent, less creative )
+
 
 ### Example
 
