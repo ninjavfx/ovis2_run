@@ -59,9 +59,24 @@ def main():
         default="cuda:0",
         help="Device to run the model on",
     )
+    parser.add_argument(
+        "--do_sample",
+        action="store_true",
+        default=True,
+        help="Use sampling for text generation (more creative but less consistent)",
+    )
+    parser.add_argument(
+        "--no_sample",
+        action="store_true",
+        help="Use greedy decoding (more consistent but less creative)",
+    )
 
     # Parse arguments
     args = parser.parse_args()
+    
+    # Handle do_sample flag (--no_sample overrides --do_sample)
+    if args.no_sample:
+        args.do_sample = False
 
     # Extract filename and create output path
     image_path = args.image_path
@@ -129,6 +144,7 @@ def main():
             temperature=args.temperature,
             top_p=args.top_p,
             max_partition=args.max_partition,
+            do_sample=args.do_sample,
         )
 
         # Print clean output

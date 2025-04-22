@@ -1,7 +1,5 @@
 # inference.py
 import torch
-import re
-
 
 def generate_response(
     model,
@@ -13,6 +11,7 @@ def generate_response(
     temperature=0.7,
     top_p=0.9,
     max_partition=9,
+    do_sample=True,
 ):
     """
     Generate a response from the model based on the input query and images.
@@ -58,50 +57,37 @@ def generate_response(
 
         # Generate the response
         with torch.no_grad():
-            outputs = model.generate(
-                inputs=input_ids,
-                attention_mask=attention_mask,
-                pixel_values=pixel_values,
-                max_new_tokens=max_new_tokens,
-                do_sample=True,
-                temperature=temperature,
-                top_p=top_p,
-                repetition_penalty=1.2,
-            )
-
-        try:
-            # Get the full output text
-            full_text = text_tokenizer.decode(outputs[0], skip_special_tokens=True)
+            # Set up generation parameters based on sampling choice
+            gen_kwargs = {
+                "inputs": input_ids,
+                "attention_mask": attention_mask,
+                "pixel_values": pixel_values,
+                "max_new_tokens": max_new_tokens,
+                "repetition_penalty": 1.2,
+            }
             
-            # Also get just the new tokens
-            new_tokens_text = text_tokenizer.decode(
-                outputs[0, input_length:], skip_special_tokens=True
-            )
-            
-            # Try to extract assistant's response using patterns similar to CLI version
-            clean_text = full_text
-            
-            # Try to extract assistant's response from chat format
-            assistant_pattern = r"<\|im_start\|>assistant(.*?)(?=<\|im_end\|>|$)"
-            assistant_parts = re.findall(assistant_pattern, clean_text, re.DOTALL)
-            if assistant_parts:
-                # Get the last assistant response
-                clean_text = assistant_parts[-1].strip()
-            
-            # If the response still seems too short, use new tokens
-            if len(clean_text) < len(new_tokens_text) * 0.8:
-                clean_text = new_tokens_text
+            # Add sampling parameters only if do_sample is True
+            if do_sample:
+                gen_kwargs.update({
+                    "do_sample": True,
+                    "temperature": temperature,
+                    "top_p": top_p,
+                })
+            else:
+                gen_kwargs.update({
+                    "do_sample": False,
+                    "eos_token_id": model.generation_config.eos_token_id,
+                    "pad_token_id": text_tokenizer.pad_token_id,
+                })
                 
-            # Final cleanup for readability
-            clean_text = clean_text.strip()
-            
-            return clean_text
-            
-        except Exception as e:
-            # Fall back to direct token decoding if processing fails
-            return text_tokenizer.decode(
-                outputs[0, input_length:], skip_special_tokens=True
-            ).strip()
+            outputs = model.generate(**gen_kwargs)
+
+        # Simply decode the entire output with skip_special_tokens=True
+        generated_text = text_tokenizer.decode(
+            outputs[0], skip_special_tokens=True
+        ).strip()
+        
+        return generated_text
 
     except Exception as e:
         import traceback

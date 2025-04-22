@@ -17,6 +17,7 @@ DEFAULT_MAX_NEW_TOKENS = 1024
 DEFAULT_TEMPERATURE = 0.7
 DEFAULT_TOP_P = 0.9
 DEFAULT_MAX_PARTITION = 9  # For high-resolution image handling
+DEFAULT_DO_SAMPLE = True
 
 
 def parse_args():
@@ -67,7 +68,14 @@ class Ovis2WebUI:
             raise
 
     def process_single_image(
-        self, image, prompt, max_new_tokens, temperature, top_p, max_partition
+        self, 
+        image, 
+        prompt, 
+        max_new_tokens, 
+        temperature, 
+        top_p, 
+        max_partition,
+        do_sample
     ):
         """Process a single image with the given prompt"""
         if self.model is None:
@@ -91,6 +99,7 @@ class Ovis2WebUI:
             temperature=temperature,
             top_p=top_p,
             max_partition=max_partition,
+            do_sample=do_sample,
         )
 
         return response
@@ -125,26 +134,32 @@ def create_ui(ui_instance):
                     lines=3,
                 )
                 with gr.Accordion("Advanced Options", open=False):
+                    do_sample = gr.Checkbox(
+                        label="Use Sampling (more creative but less consistent)",
+                        value=DEFAULT_DO_SAMPLE,
+                    )
+                    with gr.Group(visible=DEFAULT_DO_SAMPLE) as sampling_params:
+                        temperature = gr.Slider(
+                            minimum=0.1,
+                            maximum=2.0,
+                            value=DEFAULT_TEMPERATURE,
+                            step=0.1,
+                            label="Temperature",
+                        )
+                        top_p = gr.Slider(
+                            minimum=0.1,
+                            maximum=1.0,
+                            value=DEFAULT_TOP_P,
+                            step=0.05,
+                            label="Top-P",
+                        )
+                    
                     max_new_tokens = gr.Slider(
                         minimum=16,
                         maximum=4096,
                         value=DEFAULT_MAX_NEW_TOKENS,
                         step=16,
                         label="Max New Tokens",
-                    )
-                    temperature = gr.Slider(
-                        minimum=0.1,
-                        maximum=2.0,
-                        value=DEFAULT_TEMPERATURE,
-                        step=0.1,
-                        label="Temperature",
-                    )
-                    top_p = gr.Slider(
-                        minimum=0.1,
-                        maximum=1.0,
-                        value=DEFAULT_TOP_P,
-                        step=0.05,
-                        label="Top-P",
                     )
                     max_partition = gr.Slider(
                         minimum=1,
@@ -163,6 +178,13 @@ def create_ui(ui_instance):
                 save_btn = gr.Button("Save Response As...", variant="secondary")
                 download_file = gr.File(label="Download", visible=False)
 
+        # Toggle visibility of sampling parameters based on checkbox
+        do_sample.change(
+            fn=lambda x: gr.update(visible=x),
+            inputs=[do_sample],
+            outputs=[sampling_params],
+        )
+        
         # Connect the generate button
         submit_btn.click(
             fn=ui_instance.process_single_image,
@@ -173,6 +195,7 @@ def create_ui(ui_instance):
                 temperature,
                 top_p,
                 max_partition,
+                do_sample,
             ],
             outputs=output_text,
         )
