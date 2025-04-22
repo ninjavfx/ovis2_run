@@ -11,6 +11,7 @@ This tool enables local inference with the Ovis2-16B-GPTQ-Int4 multimodal model,
 ## Requirements
 
 - NVIDIA GPU with at least 16GB VRAM
+- CUDA 12.1
 - Python 3.10
 - Git
 - Conda (recommended for environment management)
