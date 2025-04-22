@@ -1,10 +1,14 @@
 import argparse
-import torch
-import gc
 import os
+import gc
+import sys
+import torch
 from PIL import Image
-from gptqmodel import GPTQModel
-import re
+
+# Add the parent directory to sys.path to enable importing from lib/
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from lib.model_loader import load_model
+from lib.inference import generate_response
 
 
 def main():
@@ -32,9 +36,28 @@ def main():
         help="Directory to save output text file (defaults to same location as image)",
     )
     parser.add_argument(
-        "--save_raw",
-        action="store_true",
-        help="Also save the raw, unprocessed output for debugging",
+        "--temperature",
+        type=float,
+        default=0.7,
+        help="Sampling temperature for generation",
+    )
+    parser.add_argument(
+        "--top_p",
+        type=float,
+        default=0.9,
+        help="Top-p sampling parameter",
+    )
+    parser.add_argument(
+        "--max_partition",
+        type=int,
+        default=9,
+        help="Maximum image partition for high-resolution images",
+    )
+    parser.add_argument(
+        "--device",
+        type=str,
+        default="cuda:0",
+        help="Device to run the model on",
     )
 
     # Parse arguments
@@ -58,196 +81,72 @@ def main():
 
     # Construct full output path
     output_path = os.path.join(output_dir, output_file)
-    # Path for raw output if requested
-    raw_output_path = os.path.join(output_dir, f"{image_name}_raw.txt")
 
-    # Memory management environment variable
+    # Memory management
     os.environ["PYTORCH_CUDA_ALLOC_CONF"] = (
         "max_split_size_mb:128,expandable_segments:True"
     )
-
-    # Clear CUDA cache and garbage collect
     torch.cuda.empty_cache()
     gc.collect()
 
     # Load image
-    image = Image.open(args.image_path)
+    try:
+        image = Image.open(args.image_path)
+    except Exception as e:
+        print(f"Error loading image: {e}")
+        return
 
     # Set device
-    device = "cuda:0"
-    torch.cuda.set_device(device)
+    device = args.device
+    try:
+        torch.cuda.set_device(device)
+    except Exception as e:
+        print(f"Error setting device: {e}. Using default device.")
 
     print("Starting model load...")
 
-    # Load model with optimized settings
     try:
-        model = GPTQModel.load(
-            args.model_path,
-            device=device,
-            trust_remote_code=True,
-            low_cpu_mem_usage=True,
+        # Use the model_loader module
+        model, text_tokenizer, visual_tokenizer = load_model(
+            model_path=args.model_path, device=device
         )
 
         print("Model loaded successfully!")
 
-        # Get tokenizers
-        text_tokenizer = model.get_text_tokenizer()
-        visual_tokenizer = model.get_visual_tokenizer()
-
         # Format prompt
         query = f"<image>\n{args.prompt}"
 
-        # Preprocess input
-        print("Processing inputs...")
-        prompt, input_ids, pixel_values = model.preprocess_inputs(
-            query, [image], max_partition=9
+        print(f"Processing input for {image_basename}...")
+
+        # Use the inference module
+        clean_text = generate_response(
+            model=model,
+            text_tokenizer=text_tokenizer,
+            visual_tokenizer=visual_tokenizer,
+            query=query,
+            images=[image],
+            max_new_tokens=args.max_tokens,
+            temperature=args.temperature,
+            top_p=args.top_p,
+            max_partition=args.max_partition,
         )
-        attention_mask = torch.ne(input_ids, text_tokenizer.pad_token_id)
 
-        # Save the original input length to determine what's newly generated
-        input_length = input_ids.shape[0]
+        # Print clean output
+        print("\n" + "=" * 50)
+        print("OUTPUT:")
+        print("=" * 50)
+        print(clean_text)
+        print("=" * 50)
 
-        # Prepare for model
-        input_ids = input_ids.unsqueeze(0).to(device=device)
-        attention_mask = attention_mask.unsqueeze(0).to(device=device)
+        # Save the output file - remove newlines for the file output
+        file_output = clean_text.replace("\n", " ").replace("\r", "")
+        # Also normalize multiple spaces
+        while "  " in file_output:
+            file_output = file_output.replace("  ", " ")
 
-        if isinstance(pixel_values, list):
-            pixel_values = [pv.unsqueeze(0).to(device=device) for pv in pixel_values]
-        else:
-            pixel_values = pixel_values.unsqueeze(0).to(device=device)
-
-        # Generate output
-        print(f"\nGenerating output for {image_basename}...")
-        with torch.no_grad():
-            outputs = model.generate(
-                inputs=input_ids,
-                attention_mask=attention_mask,
-                pixel_values=pixel_values,
-                max_new_tokens=args.max_tokens,
-                do_sample=True,
-                temperature=0.7,
-                top_p=0.9,
-                repetition_penalty=1.2,
-            )
-
-        try:
-            # Decode full output
-            full_text = text_tokenizer.decode(outputs[0], skip_special_tokens=True)
-
-            # Also try getting just the newly generated tokens
-            new_tokens = outputs[0, input_length:]
-            new_tokens_text = text_tokenizer.decode(
-                new_tokens, skip_special_tokens=True
-            )
-
-            # Save raw output if requested
-            if args.save_raw:
-                with open(raw_output_path, "w", encoding="utf-8") as f:
-                    f.write(full_text)
-                print(f"Raw output saved to: {raw_output_path}")
-
-            # Try multiple extraction approaches to get clean text
-
-            # Start with the full text
-            clean_text = full_text
-
-            # Try to extract assistant's response from chat format
-            assistant_pattern = r"<\|im_start\|>assistant(.*?)(?=<\|im_end\|>|$)"
-            assistant_parts = re.findall(assistant_pattern, clean_text, re.DOTALL)
-            if assistant_parts:
-                # Get the last assistant response
-                clean_text = assistant_parts[-1].strip()
-
-            # Try to remove any metadata part after a colon
-            # But only if it doesn't disrupt sentences midway
-            if ":" in clean_text and len(clean_text.split(":")[0]) > 100:
-                candidate = clean_text.split(":")[0].strip()
-                if (
-                    candidate.endswith(".")
-                    or candidate.endswith("!")
-                    or candidate.endswith("?")
-                ):
-                    clean_text = candidate
-
-            # Extract well-formed complete sentences if available
-            sentences = re.findall(r"[A-Z][^.!?]*[.!?]", clean_text)
-            if sentences and sum(len(s) for s in sentences) > 100:
-                # Only use this approach if we have substantial sentence content
-                clean_text = " ".join(sentences)
-
-            # If the output is very short, it might be truncated
-            # Try using the new tokens directly
-            if len(clean_text) < 100 and len(new_tokens_text) > len(clean_text):
-                # Extract sentences from the new tokens text
-                new_sentences = re.findall(r"[A-Z][^.!?]*[.!?]", new_tokens_text)
-                if new_sentences:
-                    clean_text = " ".join(new_sentences)
-                else:
-                    # Just use the raw new tokens if no sentences found
-                    clean_text = new_tokens_text
-
-            # Final cleanup - careful with what we remove to avoid truncating content
-            clean_text = re.sub(
-                r":[^.!?]*$", "", clean_text
-            )  # Remove metadata after the last sentence
-            clean_text = re.sub(
-                r"%.*$", "", clean_text
-            )  # Remove anything after percent sign
-            clean_text = re.sub(r"\\n", "\n", clean_text)  # Replace escaped newlines
-
-            # Less aggressive non-text character removal
-            clean_text = re.sub(r'[^\w\s.,;:!?\'"\-\(\)\[\]{}/]', " ", clean_text)
-            clean_text = re.sub(r"\s+", " ", clean_text)  # Normalize whitespace
-            clean_text = clean_text.strip()
-
-            # If the output still seems truncated, try checking for a cutoff point
-            # and make a note in the output
-            if not (
-                clean_text.endswith(".")
-                or clean_text.endswith("!")
-                or clean_text.endswith("?")
-            ):
-                clean_text = clean_text + " [output may be truncated]"
-
-            # Print clean output
-            print("\n" + "=" * 50)
-            print("CLEAN OUTPUT:")
-            print("=" * 50)
-            print(clean_text)
-            print("=" * 50)
-
-            # Save the output file
-            with open(output_path, "w", encoding="utf-8") as f:
-                f.write(clean_text)
-            print(f"Output saved to: {output_path}")
-
-        except Exception as e:
-            print(f"Error when processing output: {e}")
-            import traceback
-
-            traceback.print_exc()
-
-            # Try a simpler approach - just use the new tokens directly
-            try:
-                simple_text = (
-                    new_tokens_text
-                    if "new_tokens_text" in locals()
-                    else text_tokenizer.decode(
-                        outputs[0, input_length:], skip_special_tokens=True
-                    )
-                )
-
-                print("\nFalling back to direct token decoding:")
-                print(
-                    simple_text[:100] + "..." if len(simple_text) > 100 else simple_text
-                )
-
-                with open(output_path, "w", encoding="utf-8") as f:
-                    f.write(simple_text)
-                print(f"Fallback output saved to: {output_path}")
-            except Exception as inner_e:
-                print(f"Simple decoding also failed: {inner_e}")
-                print("Could not generate any output file.")
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(file_output)
+        print(f"Output saved to: {output_path}")
 
     except Exception as e:
         print(f"Error: {e}")
@@ -264,4 +163,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
