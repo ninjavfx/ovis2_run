@@ -23,7 +23,7 @@ This tool enables local inference with the Ovis2-16B-GPTQ-Int4 multimodal model,
 ```bash
 conda create -n ovis2_run python=3.10 -y
 conda activate ovis2_run
-git clone git@github.com:ninjavfx/ovis2_run.git
+git clone https://github.com/ninjavfx/ovis2_run.git
 cd ovis2_run
 ```
 
