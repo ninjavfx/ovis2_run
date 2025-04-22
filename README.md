@@ -45,7 +45,7 @@ Or you can just use the included install script
 
 ### 3. Download the Model
 
-Create a directory for the model and download it using the Hugging Face CLI.\
+Create a directory for the model and download it using the Hugging Face CLI.  
 (Please note that if you have more than 24GB of VRAM you could try and download the 32B parameters)
 
 ```bash
@@ -59,7 +59,7 @@ huggingface-cli download AIDC-AI/Ovis2-16B-GPTQ-Int4 --local-dir ./models_16B
 Run the inference script with the following parameters:
 
 ```bash
-python ovis2_run.py --image_path IMAGE_PATH --prompt PROMPT --model_path MODEL_PATH [--max_tokens MAX_TOKENS] [--output_dir OUTPUT_DIR] [--save_raw]
+python ovis2_run.py --image_path IMAGE_PATH --prompt PROMPT --model_path MODEL_PATH [--max_tokens MAX_TOKENS] [--output_dir OUTPUT_DIR] 
 ```
 
 ### Parameters
@@ -69,7 +69,6 @@ python ovis2_run.py --image_path IMAGE_PATH --prompt PROMPT --model_path MODEL_P
 - `--model_path`: Path to the downloaded model directory (required)
 - `--max_tokens`: Maximum number of tokens to generate (optional)
 - `--output_dir`: Directory to save output files (optional, defaults to image directory)
-- `--save_raw`: Flag to save the raw model output (optional)
 
 ### Example
 
@@ -78,6 +77,18 @@ python ovis2_run.py --model_path="./models_16B" --image_path="my_image.jpg" --pr
 ```
 
 This command will generate a description of the image and save it to `my_image.txt` in the same directory as the source image.
+
+### Graphical User Interface
+
+For a more user-friendly experience, you can run the included gradio web interface:
+
+```bash
+python ovis2_run_gui.py --model_path "./models_16B/"
+```
+
+This will launch a web interface that allows you to upload images and interact with the model through your browser.
+
+![Gradio UI](./extras/gradio.png)
 
 ## Output Formatting Note
 
