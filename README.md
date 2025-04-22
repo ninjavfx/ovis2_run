@@ -90,10 +90,6 @@ This will launch a web interface that allows you to upload images and interact w
 
 ![Gradio UI](./extras/gradio.png)
 
-## Output Formatting Note
-
-The prompt example includes "without using any special characters except for commas and periods" to ensure cleaner output formatting. This helps avoid unexpected characters in the generated text.
-
 ## License
 
 This project is released under the [MIT License](LICENSE.md).
