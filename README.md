@@ -64,7 +64,7 @@ python ovis2_run.py --image_path IMAGE_PATH --prompt PROMPT --model_path MODEL_P
 ### Example
 
 ```bash
-python ./ovis2_run/ovis2_run.py --model_path="./models_16B" --image_path="my_image.jpg" --prompt="Describe the image without using any special characters except for commas and periods"
+python ovis2_run.py --model_path="./models_16B" --image_path="my_image.jpg" --prompt="Describe the image without using any special characters except for commas and periods"
 ```
 
 This command will generate a description of the image and save it to `my_image.txt` in the same directory as the source image.
