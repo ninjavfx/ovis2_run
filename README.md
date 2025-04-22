@@ -30,8 +30,12 @@ cd ovis2_run
 ### 2. Install the dependencies
 
 ```bash
-pip install gptqmodel
+pip install torch==2.4.0
 pip install -r requirements.txt
+pip install flash-attn==2.7.0.post2
+pip install gptqmodel
+
+Or just run install.sh which does it for you
 ```
 
 ### 3. Download the Model
