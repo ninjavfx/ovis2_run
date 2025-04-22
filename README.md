@@ -18,20 +18,23 @@ This tool enables local inference with the Ovis2-16B-GPTQ-Int4 multimodal model,
 
 ## Installation
 
-### 1. Install the Ovis Framework
-
-First, clone and set up the main [Ovis repository](https://github.com/AIDC-AI/Ovis):
+### 1. Create the Conda environment and clone the repository
 
 ```bash
-git clone git@github.com:AIDC-AI/Ovis.git
-conda create -n ovis python=3.10 -y
-conda activate ovis
-cd Ovis
-pip install -r requirements.txt
-pip install -e .
+conda create -n ovis2_run python=3.10 -y
+conda activate ovis2_run
+git clone git@github.com:ninjavfx/ovis2_run.git
+cd ovis2_run
 ```
 
-### 2. Download the Model
+### 2. Install the dependencies
+
+```bash
+pip install gptqmodel
+pip install -r requirements.txt
+```
+
+### 3. Download the Model
 
 Create a directory for the model and download it using the Hugging Face CLI:
 
@@ -40,22 +43,13 @@ mkdir models_16B
 huggingface-cli download AIDC-AI/Ovis2-16B-GPTQ-Int4 --local-dir ./models_16B
 ```
 
-### 3. Install This Tool
-
-Clone this repository inside your Ovis directory and install the required dependencies:
-
-```bash
-git clone git@github.com:ninjavfx/ovis2_run.git
-pip install gptqmodel
-pip install -r ovis2_run/requirements.txt
-```
 
 ## Usage
 
 Run the inference script with the following parameters:
 
 ```bash
-python ./ovis2_run/ovis2_run.py --image_path IMAGE_PATH --prompt PROMPT --model_path MODEL_PATH [--max_tokens MAX_TOKENS] [--output_dir OUTPUT_DIR] [--save_raw]
+python ovis2_run.py --image_path IMAGE_PATH --prompt PROMPT --model_path MODEL_PATH [--max_tokens MAX_TOKENS] [--output_dir OUTPUT_DIR] [--save_raw]
 ```
 
 ### Parameters
