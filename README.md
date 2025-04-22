@@ -35,7 +35,7 @@ pip install -r requirements.txt
 pip install flash-attn==2.7.0.post2
 pip install gptqmodel
 
-Or just run install.sh which does it for you
+Or just run install.sh
 ```
 
 ### 3. Download the Model
