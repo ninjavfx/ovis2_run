@@ -60,23 +60,16 @@ def main():
         help="Device to run the model on",
     )
     parser.add_argument(
-        "--do_sample",
-        action="store_true",
-        default=True,
-        help="Use sampling for text generation (more creative but less consistent)",
-    )
-    parser.add_argument(
         "--no_sample",
         action="store_true",
-        help="Use greedy decoding (more consistent but less creative)",
+        help="Use greedy decoding instead of sampling (more consistent but less creative)",
     )
 
     # Parse arguments
     args = parser.parse_args()
     
-    # Handle do_sample flag (--no_sample overrides --do_sample)
-    if args.no_sample:
-        args.do_sample = False
+    # Set do_sample based on the --no_sample flag
+    args.do_sample = not args.no_sample
 
     # Extract filename and create output path
     image_path = args.image_path
