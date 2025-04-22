@@ -36,4 +36,5 @@ venv.bak/
 # Local files
 *.log
 output/
+models_16B/
 .DS_Store
