@@ -1,0 +1,10 @@
+Analyze the image and respond with simple captions to describe the content. Mention if it's a profile shot, direct gaze, looking up, looking down, looking to the side, etc
+Don't add background information
+Only caption accessories like glasses, headbands, chockers ,etc
+Mention lighting only if distinctive
+Keep descriptions simple and focused on the subject and on the same line comma separated
+The format should be:
+
+framing, subject, pose/expression, accessories (if visible), lighting
+
+Framing should be: close-up, medium shot, full body shot
