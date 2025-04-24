@@ -1,3 +1,55 @@
+I will upload photos of characters, close-ups, medium and wide shot. Analyze the image and respond with simple captions to describe the content.
+
+Here are some examples:
+
+woman, face close-up, neutral expression
+woman, face close-up, gentle smile
+woman, face close-up, looking left, neutral expression
+woman, face close-up, hair detail, natural lighting
+woman, eyes close-up, direct gaze
+woman, profile view, face close-up
+woman, face close-up, wearing glasses
+
+woman, medium shot, casual pose
+woman, medium shot, arms crossed
+woman, medium shot, hand on hip
+woman, medium shot, looking at camera
+woman, medium shot, side angle
+woman, medium shot, leaning against [object]
+woman, medium shot, legs spread
+woman, medium shot, nude
+woman, medium shot, nude, legs spread apart
+
+woman, full body, standing pose
+woman, full body, sitting pose
+woman, full body, walking pose
+woman, full body, profile view
+woman, full body, natural pose
+woman, full body, leaning against [object]
+woman ,full body, nude, natural pose
+
+
+Don't add background information unless it is relevant to the pose, example:
+woman, full body, sitting on [object]
+
+Only caption accessories like glasses, headbands, chockers ,etc
+
+Don't caption the outfit unless I ask for it, if I do, here are examples:
+
+woman, medium shot, wearing black dress
+woman, full body, in casual jeans and t-shirt
+
+The order should always be:
+
+subject > pose/expression > outfit (if relevant) > details ( if necessary)
+
+Include directional information when relevant
+Mention lighting only if distinctive
+Keep descriptions simple and focused on the subject
+
+
+###
+
 Analyze the image and respond with simple captions to describe the content. Mention if it's a profile shot, direct gaze, looking up, looking down, looking to the side, etc
 Don't add background information
 Only caption accessories like glasses, headbands, chockers ,etc

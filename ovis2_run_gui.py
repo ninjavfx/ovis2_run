@@ -17,7 +17,7 @@ DEFAULT_MAX_NEW_TOKENS = 1024
 DEFAULT_TEMPERATURE = 0.7
 DEFAULT_TOP_P = 0.9
 DEFAULT_MAX_PARTITION = 9  # For high-resolution image handling
-DEFAULT_DO_SAMPLE = True
+DEFAULT_DO_SAMPLE = False  # Changed from True to False
 
 
 def parse_args():
@@ -110,9 +110,16 @@ def save_text_to_file(text):
     if not text or text.strip() == "":
         return None
 
+    # Process the text: replace newlines with spaces but keep carriage returns
+    processed_text = text.replace("\n", " ")
+    
+    # Normalize multiple spaces to single spaces
+    while "  " in processed_text:
+        processed_text = processed_text.replace("  ", " ")
+    
     # Create a temporary file
     with tempfile.NamedTemporaryFile(delete=False, suffix=".txt", mode="w") as f:
-        f.write(text)
+        f.write(processed_text)
         return f.name
 
 
@@ -131,12 +138,13 @@ def create_ui(ui_instance):
                 prompt_input = gr.Textbox(
                     label="Prompt",
                     placeholder="Describe the image in detail.",
-                    lines=3,
+                    lines=10,  # Changed from 3 to 10
+                    max_lines=10,  # Fixed at 10 lines
                 )
                 with gr.Accordion("Advanced Options", open=False):
                     do_sample = gr.Checkbox(
                         label="Use Sampling (more creative but less consistent)",
-                        value=DEFAULT_DO_SAMPLE,
+                        value=DEFAULT_DO_SAMPLE,  # Now False by default
                     )
                     with gr.Group(visible=DEFAULT_DO_SAMPLE) as sampling_params:
                         temperature = gr.Slider(
@@ -174,8 +182,8 @@ def create_ui(ui_instance):
             with gr.Column(scale=1):
                 output_text = gr.Textbox(label="Response", lines=20)
 
-                # Add a download button for saving the response
-                save_btn = gr.Button("Save Response As...", variant="secondary")
+                # Rename the save button
+                save_btn = gr.Button("Save Response", variant="secondary")  # Changed from "Save Response As..."
                 download_file = gr.File(label="Download", visible=False)
 
         # Toggle visibility of sampling parameters based on checkbox
