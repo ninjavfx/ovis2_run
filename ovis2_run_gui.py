@@ -85,6 +85,10 @@ class Ovis2WebUI:
         if isinstance(image, str):
             image = Image.open(image)
 
+        # Use default prompt if empty
+        if not prompt or prompt.strip() == "":
+            prompt = "Describe the image in detail."
+            
         # Format the query
         query = f"<image>\n{prompt}"
 
@@ -124,7 +128,12 @@ def save_text_to_file(text):
 
 
 def create_ui(ui_instance):
-    with gr.Blocks(title="Ovis2-16B Web UI") as demo:
+    with gr.Blocks(title="Ovis2-16B Web UI", css="""
+        #prompt-textarea textarea {
+            overflow-y: auto !important;
+            max-height: 240px !important; /* Approximately 10 lines of text */
+        }
+    """) as demo:
         gr.Markdown("# Ovis2-16B Multimodal Interface")
         gr.Markdown("""
         This interface allows you to interact with the Ovis2-16B-GPTQ-Int4 model, 
@@ -138,8 +147,9 @@ def create_ui(ui_instance):
                 prompt_input = gr.Textbox(
                     label="Prompt",
                     placeholder="Describe the image in detail.",
-                    lines=10,  # Changed from 3 to 10
+                    lines=10,  # Fixed at 10 lines
                     max_lines=10,  # Fixed at 10 lines
+                    elem_id="prompt-textarea",  # Add an ID for custom styling
                 )
                 with gr.Accordion("Advanced Options", open=False):
                     do_sample = gr.Checkbox(
